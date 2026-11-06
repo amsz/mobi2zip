@@ -79,3 +79,25 @@ GOPROXY=https://goproxy.cn,direct go tool mygo build
 | `MOBI2ZIP_DEMO=<目录>` | 启动时把该目录加入列表 |
 | `MOBI2ZIP_DEMO_FAKE=1` | 把列表里的文件标记成各种结束状态，检查图标 |
 | `MOBI2ZIP_DEMO_AUTOSTART=1` | 加入列表后自动开始转换 |
+
+## 发布
+
+改 `mygo.json` 里的 `version`，提交，然后打同名 tag 推上去：
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions（[release.yml](.github/workflows/release.yml)）会按顺序：
+
+1. `go vet` + `go test`（不通过就停在这一步，不会发版）
+2. 校验 tag 与 `mygo.json` 的 `version` 一致
+3. `go tool mygo build` 构建（生成图标、exe、NSIS 安装包）
+4. 打一个绿色版 zip
+5. 创建 GitHub Release，附上：
+   - `mobi2zip-setup-<version>-amd64.exe` —— 安装包
+   - `mobi2zip-<version>-windows-amd64.zip` —— 绿色版（解压即用）
+
+> 也可以在 Actions 页面手动触发（`workflow_dispatch`），只构建和上传 artifact，不发版。
+
