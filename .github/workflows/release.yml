@@ -1,46 +1,55 @@
-name: release
+# Pushing a tag such as v0.1.1 builds the Windows app and uploads it to a
+# draft release of the tag, which is published by hand: check the build,
+# then publish it.
+name: Release
 
-# Tags publish; the manual run builds without releasing, to try the build.
 on:
   push:
     tags: ["v*"]
-  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: write # the draft release, and the uploads to it
 
 jobs:
-  test:
-    runs-on: windows-latest
+  draft:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.27"
-          cache: true
-      - run: go vet ./...
-      - run: go test ./...
-
-  build:
-    needs: test
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.27"
-          cache: true
 
       # The tag names the version the build carries, so a release cannot
       # ship a version its tag disagrees with.
       - name: Check the tag matches mygo.json
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
+        run: test "$GITHUB_REF_NAME" = "v$(jq -r .version mygo.json)"
+
+      # The release page takes its notes from the changelog's section for
+      # this version, in place of GitHub's from the pull requests.
+      - name: Take the notes from the changelog
         run: |
-          $version = (Get-Content mygo.json -Raw | ConvertFrom-Json).version
-          if ("v$version" -ne $env:GITHUB_REF_NAME) {
-            throw "tag $env:GITHUB_REF_NAME does not match mygo.json v$version"
-          }
+          awk -v heading="## ${GITHUB_REF_NAME#v}" '
+            /^## / { inside = ($0 == heading); next }
+            inside
+          ' CHANGELOG.md | sed '/./,$!d' > "$RUNNER_TEMP/notes.md"
+          test -s "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
+              --draft --verify-tag --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
+          fi
+
+  build:
+    needs: draft
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27"
+          cache: true
 
       # A portable build only: the exe runs where it is unpacked, with no
       # installer and nothing written to the registry.
@@ -53,18 +62,11 @@ jobs:
         shell: pwsh
         run: |
           $version = (Get-Content mygo.json -Raw | ConvertFrom-Json).version
-          New-Item -ItemType Directory -Force build/release | Out-Null
-          Copy-Item "build/windows-amd64/mobi2zip.exe" `
-            "build/release/mobi2zip-$version-windows-amd64.exe"
+          Move-Item "build/windows-amd64/mobi2zip.exe" `
+            "build/windows-amd64/mobi2zip-$version-windows-amd64.exe"
 
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows-amd64
-          path: build/release/*.exe
-
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: build/release/*.exe
-          generate_release_notes: true
+      - name: Upload to the draft
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$env:GITHUB_REF_NAME" build/windows-amd64/*.exe --clobber

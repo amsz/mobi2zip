@@ -82,21 +82,26 @@ GOPROXY=https://goproxy.cn,direct go tool mygo build
 
 ## 发布
 
-改 `mygo.json` 里的 `version`，提交，然后打同名 tag 推上去：
+发布流程见 [RELEASING.md](RELEASING.md)。简版：改 `mygo.json` 的 `version` 并在 [CHANGELOG.md](CHANGELOG.md) 加一段，提交后推 main，再打 tag 推上去。
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git push origin main
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
-GitHub Actions（[release.yml](.github/workflows/release.yml)）会按顺序：
+GitHub Actions（[release.yml](.github/workflows/release.yml)）会：
 
-1. `go vet` + `go test`（不通过就停在这一步，不会发版）
-2. 校验 tag 与 `mygo.json` 的 `version` 一致
-3. `go tool mygo build -skip-installer` 构建，只出一个 `mobi2zip.exe`
-4. 重命名为 `mobi2zip-<version>-windows-amd64.exe` 后挂到 Release（下载即可运行，无需安装）
+1. 校验 tag 与 `mygo.json` 的 `version` 一致
+2. 从 `CHANGELOG.md` 取该版本的说明作为 release notes
+3. 创建一个 **draft** release
+4. 在 windows-latest 上构建便携 exe，重命名为 `mobi2zip-<version>-windows-amd64.exe` 传上去
 
-> 也可以在 Actions 页面手动触发（`workflow_dispatch`），只构建和上传 artifact，不发版。
+检查无误后手动发布：
 
-想额外生成 NSIS 安装包（开始菜单快捷方式、卸载项）时，本地跑 `go tool mygo build`（不带 `-skip-installer`）即可。
+```bash
+gh release edit v0.1.1 --draft=false --latest
+```
+
+构建产物只有这一个 exe，下载即可运行，无需安装。想额外生成 NSIS 安装包（开始菜单快捷方式、卸载项）时，本地跑 `go tool mygo build`（不带 `-skip-installer`）即可。
 
