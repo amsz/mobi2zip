@@ -21,24 +21,15 @@ jobs:
       - name: Check the tag matches mygo.json
         run: test "$GITHUB_REF_NAME" = "v$(jq -r .version mygo.json)"
 
-      # The release page takes its notes from the changelog's section for
-      # this version, in place of GitHub's from the pull requests.
-      - name: Take the notes from the changelog
-        run: |
-          awk -v heading="## ${GITHUB_REF_NAME#v}" '
-            /^## / { inside = ($0 == heading); next }
-            inside
-          ' CHANGELOG.md | sed '/./,$!d' > "$RUNNER_TEMP/notes.md"
-          test -s "$RUNNER_TEMP/notes.md"
-          cat "$RUNNER_TEMP/notes.md"
-
+      # The release page takes its notes from the pull requests and commits
+      # since the last tag, which GitHub writes.
       - name: Create the draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           if ! gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" \
-              --draft --verify-tag --title "$GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
+              --draft --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
           fi
 
   build:
