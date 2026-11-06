@@ -93,11 +93,10 @@ GitHub Actions（[release.yml](.github/workflows/release.yml)）会按顺序：
 
 1. `go vet` + `go test`（不通过就停在这一步，不会发版）
 2. 校验 tag 与 `mygo.json` 的 `version` 一致
-3. `go tool mygo build` 构建（生成图标、exe、NSIS 安装包）
-4. 打一个绿色版 zip
-5. 创建 GitHub Release，附上：
-   - `mobi2zip-setup-<version>-amd64.exe` —— 安装包
-   - `mobi2zip-<version>-windows-amd64.zip` —— 绿色版（解压即用）
+3. `go tool mygo build -skip-installer` 构建，只出一个 `mobi2zip.exe`
+4. 创建 GitHub Release，附上 `mobi2zip.exe`（下载即可运行，无需安装）
 
 > 也可以在 Actions 页面手动触发（`workflow_dispatch`），只构建和上传 artifact，不发版。
+
+想额外生成 NSIS 安装包（开始菜单快捷方式、卸载项）时，本地跑 `go tool mygo build`（不带 `-skip-installer`）即可。
 
