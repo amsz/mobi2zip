@@ -1,0 +1,6 @@
+# Normalize line endings, so a clone on Windows and one on macOS match.
+* text=auto eol=lf
+
+*.png binary
+*.ico binary
+*.icns binary

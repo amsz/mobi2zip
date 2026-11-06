@@ -1,0 +1,11 @@
+# built apps and installers
+build/
+.mygo/
+
+# binaries
+*.exe
+
+# editors and OS
+.DS_Store
+.idea/
+.vscode/
