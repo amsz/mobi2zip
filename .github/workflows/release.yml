@@ -47,14 +47,24 @@ jobs:
       - name: Build
         run: go tool mygo build -skip-installer
 
+      # The asset carries the version it was built from, so a downloaded
+      # file says which release it belongs to.
+      - name: Name the asset
+        shell: pwsh
+        run: |
+          $version = (Get-Content mygo.json -Raw | ConvertFrom-Json).version
+          New-Item -ItemType Directory -Force build/release | Out-Null
+          Copy-Item "build/windows-amd64/mobi2zip.exe" `
+            "build/release/mobi2zip-$version-windows-amd64.exe"
+
       - uses: actions/upload-artifact@v4
         with:
           name: windows-amd64
-          path: build/windows-amd64/mobi2zip.exe
+          path: build/release/*.exe
 
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/windows-amd64/mobi2zip.exe
+          files: build/release/*.exe
           generate_release_notes: true
