@@ -2,7 +2,7 @@
   "name": "mobi2zip",
   "identifier": "dev.sunxiaochen.mobi2zip",
   "slug": "mobi2zip",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "out": "build",
   "windows": {
     "displayName": "漫画解包"
