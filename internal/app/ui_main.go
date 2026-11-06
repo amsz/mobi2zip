@@ -177,8 +177,13 @@ func (a *app) footer(c *ui.Context) {
 
 		// Middle: how the run went, centered in the window.
 		ui.Column(c).Absolute().Left(0).Right(0).Top(0).Bottom(0).Center().Gap(1).IgnoreInput(true).Children(func() {
-			ui.Text(c, fmt.Sprintf("成功 %d · 跳过 %d · 失败 %d", done, skipped, failed)).
-				FontSize(12).TextColor(p.muted)
+			ui.Row(c).Gap(8).AlignItems(ui.Center).Children(func() {
+				a.count(c, "成功", done, p.success)
+				ui.Text(c, "·").FontSize(12).TextColor(p.faint)
+				a.count(c, "跳过", skipped, p.warning)
+				ui.Text(c, "·").FontSize(12).TextColor(p.faint)
+				a.count(c, "失败", failed, p.danger)
+			})
 			if a.conv != nil && a.conv.Calibre == "" {
 				ui.Text(c, "未检测到 calibre，仅支持 EPUB").FontSize(11.5).TextColor(p.warning)
 			}
@@ -194,6 +199,15 @@ func (a *app) footer(c *ui.Context) {
 			}
 		})
 	})
+}
+
+// count shows one part of the run's result, colored once it is not zero.
+func (a *app) count(c *ui.Context, label string, n int, color ui.Color) {
+	col := a.pal.muted
+	if n > 0 {
+		col = color
+	}
+	ui.Text(c, fmt.Sprintf("%s %d", label, n)).FontSize(12).TextColor(col)
 }
 
 // archiveLabel is where converted originals go, as the footer shows it.
