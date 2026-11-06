@@ -14,9 +14,11 @@
 
 ```bash
 go tool mygo dev     # 开发运行
-go tool mygo build   # 打包到 build/windows-amd64（exe + NSIS 安装包）
+go tool mygo build   # 打包到 build/windows-amd64（mobi2zip.exe + NSIS 安装包）
 go test ./...
 ```
+
+产物文件名是英文的 `mobi2zip.exe`；Windows 上显示的名称仍为「漫画解包」（`mygo.json` 的 `windows.displayName`）。
 
 首次构建会拉取 MyGo 依赖；若 `proxy.golang.org` 不通：
 
@@ -29,10 +31,8 @@ GOPROXY=https://goproxy.cn,direct go tool mygo build
 设置保存在用户数据目录：
 
 ```
-%APPDATA%\漫画解包\settings.json
+%APPDATA%\mobi2zip\settings.json
 ```
-
-（用 `go build` 出来的裸 exe 运行时，目录名取 exe 名 `mobi2zip`。）
 
 字段：
 

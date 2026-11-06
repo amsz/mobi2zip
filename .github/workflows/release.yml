@@ -50,7 +50,7 @@ jobs:
         run: |
           $version = (Get-Content mygo.json -Raw | ConvertFrom-Json).version
           New-Item -ItemType Directory -Force build/portable | Out-Null
-          Copy-Item "build/windows-amd64/漫画解包.exe" "build/portable/mobi2zip.exe"
+          Copy-Item "build/windows-amd64/mobi2zip.exe" "build/portable/mobi2zip.exe"
           Compress-Archive -Path "build/portable/mobi2zip.exe" `
             -DestinationPath "build/mobi2zip-$version-windows-amd64.zip" -Force
 
