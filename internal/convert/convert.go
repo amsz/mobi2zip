@@ -123,6 +123,7 @@ func (c *Converter) toEPUB(ctx context.Context, src string, progress Progress) (
 
 	args := []string{src, dst, "--no-default-epub-cover", "--disable-font-rescaling"}
 	cmd := exec.CommandContext(ctx, c.Calibre, args...)
+	hideWindow(cmd)
 	var out strings.Builder
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -171,6 +172,7 @@ func CalibreVersion(ctx context.Context, exe string) (string, error) {
 		return "", errNoCalibre
 	}
 	cmd := exec.CommandContext(ctx, exe, "--version")
+	hideWindow(cmd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("%v：%s", err, tail(string(out), 2))
